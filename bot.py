@@ -11,16 +11,26 @@ def handle_start(message):
 @bot.message_handler(commands=['help'])
 def handle_help(message):
     bot.send_message(message.chat.id, "Доступные команды:\n/start - начать работу с ботом и получить приветственное сообщение.\n/help - получить список доступных команд.\n/show_city <city_name> - отобразить указанный город на карте.\n/remember_city <city_name> - сохранить город в список избранных.\n/show_my_cities - показать все сохраненные города.")
+    
 
 
 @bot.message_handler(commands=['show_city'])
 def handle_show_city(message):
     city_name = " ".join(message.text.split()[1:])
     # Реализуй отрисовку города по запросу
-    user_id = message.chat.id
-    manager.create_graph(f'{user_id}.png', [city_name])  # Создание карты для города
-    with open(f'{user_id}.png', 'rb') as map:  # Открытие и отправка карты пользователю
-        bot.send_photo(user_id, map)
+    bot.send_message(message.chat.id, "Какой цвет вы хотите использовать? Напишите первую букву цвета на английском языке.")
+    bot.register_next_step_handler(message, handle_show_city_def, bot=bot, city_name=city_name)
+
+def handle_show_city_def(message, bot, city_name):
+    try:
+        user_id = message.chat.id
+        color = message.text
+        manager.create_graph(f'{user_id}.png', [city_name], color)  # Создание карты для города
+        with open(f'{user_id}.png', 'rb') as map:  # Открытие и отправка карты пользователю
+            bot.send_photo(user_id, map)
+    except Exception:
+        bot.send_message(message.chat.id, "Вы не правильно указали цвет. Попробуйте ещё раз.")
+        bot.register_next_step_handler(message, handle_show_city_def, bot=bot, city_name=city_name)
 
 
 
@@ -38,10 +48,19 @@ def handle_remember_city(message):
 def handle_show_visited_cities(message):
     cities = manager.select_cities(message.chat.id)
     # Реализуй отрисовку всех городов
-    user_id = message.chat.id
-    manager.create_graph(f'{user_id}.png', cities)  # Создание карты для города
-    with open(f'{user_id}.png', 'rb') as map:  # Открытие и отправка карты пользователю
-        bot.send_photo(user_id, map)
+    bot.send_message(message.chat.id, "Какой цвет вы хотите использовать? Напишите первую букву цвета на английском языке.")
+    bot.register_next_step_handler(message, handle_show_visited_cities_def, bot=bot, cities=cities)
+
+def handle_show_visited_cities_def(message, bot, cities):
+    try:
+        color = message.text
+        user_id = message.chat.id
+        manager.create_graph(f'{user_id}.png', cities, color)  # Создание карты для города
+        with open(f'{user_id}.png', 'rb') as map:  # Открытие и отправка карты пользователю
+            bot.send_photo(user_id, map)
+    except Exception:
+        bot.send_message(message.chat.id, "Вы не правильно указали цвет. Попробуйте ещё раз.")
+        bot.register_next_step_handler(message, handle_show_visited_cities_def, bot=bot, cities=cities)
 
 if __name__=="__main__":
     manager = DB_Map(DATABASE)

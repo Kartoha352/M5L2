@@ -4,6 +4,7 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import cartopy.crs as ccrs
+import cartopy.feature as cfeature
 
 
 class DB_Map():
@@ -58,15 +59,20 @@ class DB_Map():
             coordinates = cursor.fetchone()
             return coordinates
 
-    def create_graph(self, path, cities):
+    def create_graph(self, path, cities, color = 'r'):
         ax = plt.axes(projection=ccrs.PlateCarree())
         ax.stock_img()
         for city in cities:
             coordinates = self.get_coordinates(city) # coordinates = (77.55, 88.56)
             if coordinates:
                 lat, lng = coordinates # lat, lng = (77.55, 88.56)
-                plt.plot([lng], [lat], color='r', linewidth=1, marker='.', transform=ccrs.Geodetic())
-                plt.text(lng+3, lat+12, city, horizontalalignment='left', transform=ccrs.Geodetic())
+                plt.plot([lng], [lat], color=color, linewidth=1, marker='.', transform=ccrs.Geodetic())
+                plt.text(lng+3, lat+12, city, horizontalalignment='left',color=color, transform=ccrs.Geodetic())
+                ax.add_feature(cfeature.OCEAN, color='blue') # добавил
+                ax.add_feature(cfeature.LAND, color='tan') # добавил
+                ax.add_feature(cfeature.RIVERS, edgecolor='blue')  # добавил
+                ax.add_feature(cfeature.LAKES, edgecolor='blue', facecolor='lightblue')  # добавил
+                ax.add_feature(cfeature.BORDERS, linestyle='--', edgecolor='gray') # добавил
         plt.savefig(path)
         plt.close()
 
